@@ -12,6 +12,7 @@
 (defn detatch-last-child [vdom id]
   (vdom/detatch vdom (-> (vdom/node vdom id) :children peek)))
 
+;;XXX Diff submaps recursively for "style" and "attributes"
 (defn update-element [vdom before {:keys [id props] :as after}]
   (let [removed (set/difference (-> before :props keys set)
                                 (-> props keys set))
@@ -21,7 +22,6 @@
         updated (reduce (fn [acc [k val]]
                           (if (= (old-props k val) val)
                             acc
-                            ;;XXX is value is map, recursively merge.
                             (assoc acc k val)))
                         updated
                         props)]

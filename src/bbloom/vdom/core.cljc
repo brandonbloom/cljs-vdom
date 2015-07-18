@@ -1,5 +1,5 @@
 (ns bbloom.vdom.core
-  (:require [bbloom.vdom.util :as util]))
+  (:require [bbloom.vdom.util :refer [remove-item insert]]))
 
 (defprotocol IDom
   "Models multiple DOM trees relationally (ie. linked by IDs). The root of
@@ -18,7 +18,9 @@
   (create-text [vdom id text])
   (set-text [vdom id text])
   (create-element [vdom id tag])
-  (set-props [vdom id props])
+  (set-props [vdom id props]
+   "Merges props to the node, removing those set to nil.
+   Map values are treated recursively.")
   (insert-child [vdom parent-id index child-id])
   (free [vdom id])
   )
@@ -68,7 +70,7 @@
       (assert n (str "No such node id: " id))
       (assert parent (str "No already detatched: " id))
       (-> vdom
-          (update-in [:nodes parent :children] util/remove-item id)
+          (update-in [:nodes parent :children] remove-item id)
           (update-in [:nodes id] dissoc :parent)
           (update :detatched conj id))))
 
@@ -92,8 +94,15 @@
   (set-props [vdom id props]
     (assert (string? (get-in vdom [:nodes id :tag]))
             (str "Cannot set props of non-element node: " id))
-    ;;XXX recursively merge map values & dissoc when values are nil.
-    (update-in vdom [:nodes id :props] merge props))
+    (update-in vdom [:nodes id :props]
+               (fn [old-props]
+                 (reduce (fn rec [acc [k v]]
+                           (cond
+                             (nil? v) (dissoc acc k)
+                             (map? v) (assoc acc k (reduce rec (acc k) v))
+                             :else (assoc acc k v)))
+                         old-props
+                         props))))
 
   (insert-child [vdom parent-id index child-id]
     ;;TODO This needs an assert or two.
@@ -103,7 +112,7 @@
                  vdom)]
       (-> vdom
           (assoc-in [:nodes child-id :parent] parent-id)
-          (update-in [:nodes parent-id :children] util/insert index child-id)
+          (update-in [:nodes parent-id :children] insert index child-id)
           (update-in [:detatched] disj child-id))))
 
   (free [vdom id]
@@ -118,3 +127,17 @@
   )
 
 (def null (map->VDom {:nodes {} :mounts {} :hosts {} :detatched #{}}))
+
+(comment
+
+  (-> null
+      (create-element :x "div")
+      (set-props :x {"a" 1})
+      (set-props :x {"b" 2})
+      ;(set-props :x {"a" nil})
+      (set-props :x {"nest" {"x" 3}})
+      ;(set-props :x {"nest" {"x" nil}})
+      fipp.edn/pprint
+      )
+
+)
