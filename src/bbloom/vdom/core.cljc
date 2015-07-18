@@ -1,24 +1,5 @@
 (ns bbloom.vdom.core
-  (:require [clojure.core.rrb-vector :as rrb]))
-
-;;; Vector Utilities.
-
-(defn remove-at [v i]
-  (rrb/catvec (rrb/subvec v 0 i) (rrb/subvec v (inc i))))
-
-(defn index-of [v x]
-  (let [n (count v)]
-    (loop [i 0]
-      (cond
-        (= i n) nil
-        (= (nth v i) x) i
-        :else (recur (inc i))))))
-
-(defn remove-item [v x]
-  (remove-at v (index-of v x)))
-
-(defn insert [v i x]
-  (rrb/catvec (rrb/subvec v 0 i) [x] (rrb/subvec v i)))
+  (:require [bbloom.vdom.util :as util]))
 
 (defprotocol IDom
   "Models multiple DOM trees relationally (ie. linked by IDs). The root of
@@ -88,7 +69,7 @@
       (assert n (str "No such node id: " id))
       (assert parent (str "No already detatched: " id))
       (-> vdom
-          (update-in [:nodes parent :children] remove-item id)
+          (update-in [:nodes parent :children] util/remove-item id)
           (update-in [:nodes id] dissoc :parent)
           (update :detatched conj id))))
 
@@ -127,7 +108,7 @@
                  vdom)]
       (-> vdom
           (assoc-in [:nodes child-id :parent] parent-id)
-          (update-in [:nodes parent-id :children] insert index child-id)
+          (update-in [:nodes parent-id :children] util/insert index child-id)
           (update-in [:detatched] disj child-id))))
 
   (free [vdom id]
