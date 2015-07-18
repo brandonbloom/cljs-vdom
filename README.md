@@ -33,6 +33,8 @@ More details on these novelties coming soon.
 
 Don't. At least not yet.
 
+But if you want to play with it, checkout [playground.cljs][2].
+
 ## Contributing
 
 Ping me if you're interested, I'm excited to discuss what you've got in mind.
@@ -47,3 +49,4 @@ your option) any later version.
 
 [0]: https://github.com/Matt-Esch/virtual-dom
 [1]: https://facebook.github.io/react/
+[2]: ./src/bbloom/vdom/playground.cljs
