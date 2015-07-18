@@ -9,8 +9,8 @@
     vdom
     (vdom/set-text vdom id text)))
 
-(defn detatch-last-child [vdom id]
-  (vdom/detatch vdom (-> (vdom/node vdom id) :children peek)))
+(defn detach-last-child [vdom id]
+  (vdom/detach vdom (-> (vdom/node vdom id) :children peek)))
 
 (defn diff-maps [before after]
   (let [removed (set/difference (-> before keys set) (-> after keys set))]
@@ -66,11 +66,11 @@
                          (vdom/insert-child vdom id i child)))
              vdom
              (map vector (range) children))
-        ;; Detatch any leftover trailing children.
+        ;; Detach any leftover trailing children.
         n (max 0 (- (count (:children (vdom/node vdom id)))
                     (count children)))
         vdom (nth (iterate (fn [vdom]
-                             (detatch-last-child vdom id))
+                             (detach-last-child vdom id))
                            vdom)
                   n)]
     vdom))

@@ -36,9 +36,9 @@
     (DomTrace. (conj trace [:unmount id])
                (vdom/unmount dom id)))
 
-  (detatch [vdom id]
-    (DomTrace. (conj trace [:detatch id])
-               (vdom/detatch dom id)))
+  (detach [vdom id]
+    (DomTrace. (conj trace [:detach id])
+               (vdom/detach dom id)))
 
   (create-text [vdom id text]
     (DomTrace. (conj trace [:create-text id text])

@@ -3,7 +3,7 @@
 
 (defprotocol IDom
   "Models multiple DOM trees relationally (ie. linked by IDs). The root of
-  each tree can be either 'mounted' on to an external DOM or 'detatched'.
+  each tree can be either 'mounted' on to an external DOM or 'detached'.
   Provides a minimal set of atomic manipulations which mirror efficient
   mutations of a browser DOM."
   ;; Accessors
@@ -14,7 +14,7 @@
   ;; Manipulations
   (mount [vdom eid id])
   (unmount [vdom id])
-  (detatch [vdom id])
+  (detach [vdom id])
   (create-text [vdom id text])
   (set-text [vdom id text])
   (create-element [vdom id tag])
@@ -26,7 +26,7 @@
   )
 
 ;;TODO :parent is stored on nodes directly, should it be a top-level map?
-(defrecord VDom [nodes mounts hosts detatched]
+(defrecord VDom [nodes mounts hosts detached]
 
   IDom
 
@@ -54,7 +54,7 @@
     (-> vdom
         (assoc-in [:mounts eid] id)
         (assoc-in [:hosts id] eid)
-        (update :detatched disj id)))
+        (update :detached disj id)))
 
   (unmount [vdom id]
     (let [n (get-in vdom [:nodes id])]
@@ -63,22 +63,22 @@
       (-> vdom
           (update :mounts dissoc id)
           (update :hosts dissoc id)
-          (update :detatched conj id))))
+          (update :detached conj id))))
 
-  (detatch [vdom id]
+  (detach [vdom id]
     (let [{:keys [parent] :as n} (get-in vdom [:nodes id])]
       (assert n (str "No such node id: " id))
-      (assert parent (str "No already detatched: " id))
+      (assert parent (str "No already detached: " id))
       (-> vdom
           (update-in [:nodes parent :children] remove-item id)
           (update-in [:nodes id] dissoc :parent)
-          (update :detatched conj id))))
+          (update :detached conj id))))
 
   (create-text [vdom id text]
     (assert (nil? (get-in vdom [:nodes id])) (str "Node already exists: " id))
     (-> vdom
         (assoc-in [:nodes id] {:id id :tag :text :text text})
-        (update :detatched conj id)))
+        (update :detached conj id)))
 
   (set-text [vdom id text]
     (assert (= (get-in vdom [:nodes id :tag]) :text)
@@ -89,7 +89,7 @@
     (assert (nil? (get-in vdom [:nodes id])) (str "Node already exists: " id))
     (-> vdom
         (assoc-in [:nodes id] {:id id :tag tag :children []})
-        (update :detatched conj id)))
+        (update :detached conj id)))
 
   (set-props [vdom id props]
     (assert (string? (get-in vdom [:nodes id :tag]))
@@ -113,20 +113,20 @@
       (-> vdom
           (assoc-in [:nodes child-id :parent] parent-id)
           (update-in [:nodes parent-id :children] insert index child-id)
-          (update-in [:detatched] disj child-id))))
+          (update-in [:detached] disj child-id))))
 
   (free [vdom id]
-    (assert (get-in vdom [:detatched id])
-            (str "Cannot free non-detatched node:" id))
+    (assert (get-in vdom [:detached id])
+            (str "Cannot free non-detached node:" id))
     ((fn rec [vdom id]
        (reduce rec
                (update vdom :nodes dissoc id)
                (get-in vdom [:nodes id :children])))
-     (update vdom :detatched disj id) id))
+     (update vdom :detached disj id) id))
 
   )
 
-(def null (map->VDom {:nodes {} :mounts {} :hosts {} :detatched #{}}))
+(def null (map->VDom {:nodes {} :mounts {} :hosts {} :detached #{}}))
 
 (comment
 

@@ -12,16 +12,16 @@
     (.appendChild el (nodes id))
     nodes))
 
-(defn- detatch [nodes id]
+(defn- detach [nodes id]
   (let [child (nodes id)]
     (.removeChild (.-parentNode child) child))
   nodes)
 
 (defmethod mutate :unmount [nodes [_ id]]
-  (detatch nodes id))
+  (detach nodes id))
 
-(defmethod mutate :detatch [nodes [_ id]]
-  (detatch nodes id))
+(defmethod mutate :detach [nodes [_ id]]
+  (detach nodes id))
 
 (defmethod mutate :create-text [nodes [_ id text]]
   (assoc nodes id (.createTextNode js/document text)))
