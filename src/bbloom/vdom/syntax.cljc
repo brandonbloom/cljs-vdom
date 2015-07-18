@@ -10,7 +10,7 @@
 (declare seqs->maps)
 
 (defn seq->map [[tag props & children]]
-  {:tag (str tag)
+  {:tag (name tag) ;XXX ignores namespace (on purpose for syntax quote)
    :props props
    :children (mapv seqs->maps children)})
 

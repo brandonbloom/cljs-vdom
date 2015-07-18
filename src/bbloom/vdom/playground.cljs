@@ -13,13 +13,25 @@
 
 (println "Hello world!")
 
-(render (vdom/mount (seqs->vdom '(div {"tabindex" 0}
-                                   (i {:key "c"} "italic!")
-                                   (span {:key "a"} "foo")
-                                   (b {} "bar")
-                                   (div {:key "b"
-                                         "style" {"color" "red"}} "foox")
-                                   (input {:key "c"
-                                           "value" "abx"})
-                                   ))
-                    "root" [["div" 0]]))
+;; defonce because functions have reference equality.
+(defonce onclick
+  (fn [e]
+    (.log js/console "onclick" e)))
+
+(def tree
+  `(div {"tabindex" 0}
+     (i {:key "c"} "italic!")
+     (span {:key "a"} "foo")
+     (b {} "bar")
+     (div {:key "b"
+           "style" {"color" "red"}} "foox")
+     (input {:key "c"
+             "value" "abx"})
+     (button {"onclick" ~onclick}
+       "click me")
+     ))
+
+(-> tree
+    seqs->vdom
+    (vdom/mount "root" [["div" 0]])
+    render)
