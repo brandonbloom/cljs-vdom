@@ -5,4 +5,4 @@
 
 (cljs.repl/repl (cljs.repl.browser/repl-env)
   :watch "src"
-  :output-dir "out")
+  :output-dir "target/out")
