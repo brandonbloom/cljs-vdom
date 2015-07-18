@@ -18,7 +18,6 @@
   (create-text [vdom id text])
   (set-text [vdom id text])
   (create-element [vdom id tag])
-  (remove-props [vdom id props])
   (set-props [vdom id props])
   (insert-child [vdom parent-id index child-id])
   (free [vdom id])
@@ -90,14 +89,10 @@
         (assoc-in [:nodes id] {:id id :tag tag :children []})
         (update :detatched conj id)))
 
-  (remove-props [vdom id props]
-    (assert (string? (get-in vdom [:nodes id :tag]))
-            (str "Cannot remove props of non-element node: " id))
-    (update-in vdom [:nodes id :props] #(reduce disj % props)))
-
   (set-props [vdom id props]
     (assert (string? (get-in vdom [:nodes id :tag]))
             (str "Cannot set props of non-element node: " id))
+    ;;XXX recursively merge map values & dissoc when values are nil.
     (update-in vdom [:nodes id :props] merge props))
 
   (insert-child [vdom parent-id index child-id]

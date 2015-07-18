@@ -52,10 +52,6 @@
     (DomTrace. (conj trace [:create-element id tag])
                (vdom/create-element dom id tag)))
 
-  (remove-props [vdom id props]
-    (DomTrace. (conj trace [:remove-props id props])
-               (vdom/remove-props dom id props)))
-
   (set-props [vdom id props]
     (DomTrace. (conj trace [:set-props id props])
                (vdom/set-props dom id props)))

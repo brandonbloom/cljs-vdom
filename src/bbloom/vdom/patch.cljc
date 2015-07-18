@@ -12,19 +12,18 @@
 (defn detatch-last-child [vdom id]
   (vdom/detatch vdom (-> (vdom/node vdom id) :children peek)))
 
-;;XXX must do props patching recursively for styles & attributes
 (defn update-element [vdom before {:keys [id props] :as after}]
   (let [removed (set/difference (-> before :props keys set)
                                 (-> props keys set))
-        vdom (if (seq removed)
-               (vdom/remove-props vdom id removed)
-               vdom)
+        updated (when (seq removed)
+                  (into {} (for [prop removed] [prop nil])))
         old-props (:props before)
         updated (reduce (fn [acc [k val]]
                           (if (= (old-props k val) val)
                             acc
+                            ;;XXX is value is map, recursively merge.
                             (assoc acc k val)))
-                        nil
+                        updated
                         props)]
     (if (seq updated)
       (vdom/set-props vdom id updated)

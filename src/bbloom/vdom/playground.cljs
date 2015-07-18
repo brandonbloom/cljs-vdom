@@ -17,6 +17,8 @@
                                    (i {:key "c"} "italic!")
                                    (span {:key "a"} "foo")
                                    (b {} "bar")
-                                   (div {:style "b"} "foox")
+                                   (div {:key "b"} "foox")
+                                   (input {:key "c"
+                                           "value" "abx"})
                                    ))
                     "root" [["div" 0]]))

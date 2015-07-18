@@ -33,16 +33,18 @@
 (defmethod mutate :create-element [nodes [_ id tag]]
   (assoc nodes id (.createElement js/document tag)))
 
-(defmethod mutate :remove-props [nodes [_ id props]]
-  ;;XXX handle recursive maps specially:
-  ;;XXX clearing style sub-props: set to ''   -- necessary?
-  ;;XXX clearing attributes sub-props: call removeAttribute
-  nodes)
-
 (defmethod mutate :set-props [nodes [_ id props]]
-  ;;XXX handle recursive maps specially
-  ;;XXX set nested for style sub-props
-  ;;XXX call setAttribute for attributes sub-props
+  (let [node (nodes id)]
+    (doseq [[k v] (dissoc props "attributes" "style")]
+      ;;XXX for nil values, virtual-dom sets to "" if prev was a string. Why?
+      ;;^^^ If this is necessary, can it be done during diff?
+      (aset node k v))
+    (doseq [[k v] (props "attributes")]
+      (if (nil? v)
+        (.removeAttribute node k)
+        (.setAttribute node k v)))
+    (doseq [[k v] (props "style")]
+      (aset node "style" k (if (nil? v) "" v))))
   nodes)
 
 (defmethod mutate :insert-child [nodes [_ parent-id index child-id]]
