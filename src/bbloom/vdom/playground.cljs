@@ -17,7 +17,8 @@
                                    (i {:key "c"} "italic!")
                                    (span {:key "a"} "foo")
                                    (b {} "bar")
-                                   (div {:key "b"} "foox")
+                                   (div {:key "b"
+                                         "style" {"color" "red"}} "foox")
                                    (input {:key "c"
                                            "value" "abx"})
                                    ))

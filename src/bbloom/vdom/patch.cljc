@@ -12,19 +12,23 @@
 (defn detatch-last-child [vdom id]
   (vdom/detatch vdom (-> (vdom/node vdom id) :children peek)))
 
-;;XXX Diff submaps recursively for "style" and "attributes"
+(defn diff-maps [before after]
+  (let [removed (set/difference (-> before keys set) (-> after keys set))]
+    (reduce (fn [acc [k val]]
+              (let [old (get before k)]
+                (cond
+                  (= old val) acc
+                  (map? val) (let [sub (diff-maps old val)]
+                               (if (seq sub)
+                                 (assoc acc k sub)
+                                 acc))
+                  :else (assoc acc k val))))
+            (when (seq removed)
+              (into {} (for [prop removed] [prop nil])))
+            after)))
+
 (defn update-element [vdom before {:keys [id props] :as after}]
-  (let [removed (set/difference (-> before :props keys set)
-                                (-> props keys set))
-        updated (when (seq removed)
-                  (into {} (for [prop removed] [prop nil])))
-        old-props (:props before)
-        updated (reduce (fn [acc [k val]]
-                          (if (= (old-props k val) val)
-                            acc
-                            (assoc acc k val)))
-                        updated
-                        props)]
+  (let [updated (diff-maps (:props before) props)]
     (if (seq updated)
       (vdom/set-props vdom id updated)
       vdom)))
@@ -121,5 +125,12 @@
     ;(party vdom/null vdom)
     (party vdom vdom/null)
     )
+
+  (let [vdom (-> vdom/null
+                 (vdom/create-element :x "div")
+                 (vdom/set-props :x {"tabindex" 1 "style" {"color" "red"}}))]
+      ;(party vdom (vdom/set-props vdom :x {"tabindex" 2}))
+      (party vdom (vdom/set-props vdom :x {"style" {"background" "green"}}))
+      )
 
 )

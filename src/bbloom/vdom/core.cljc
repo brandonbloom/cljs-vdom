@@ -99,7 +99,7 @@
                  (reduce (fn rec [acc [k v]]
                            (cond
                              (nil? v) (dissoc acc k)
-                             (map? v) (assoc acc k (reduce rec (acc k) v))
+                             (map? v) (assoc acc k (reduce rec (get acc k) v))
                              :else (assoc acc k v)))
                          old-props
                          props))))

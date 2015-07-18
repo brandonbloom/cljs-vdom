@@ -12,6 +12,8 @@ Yet another Virtual DOM library (in ClojureScript).
 
 ## Non-Goals
 
+Or just goals to be realized by a higher layer.
+
 - Normalize browser behavior.
 - Provide a widget or component model (see [React.js][1]).
 - Win any benchmarks.
