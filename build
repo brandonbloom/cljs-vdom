@@ -1,0 +1,3 @@
+#!/bin/bash
+
+lein run -m clojure.main build.clj
