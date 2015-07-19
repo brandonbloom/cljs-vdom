@@ -95,5 +95,8 @@
                         mounted)]
     vdom))
 
-(defn diff [before after]
+(defn trace-patch [before after]
   (-> (traced before) (patch after) :trace))
+
+(defn diff [before after]
+  (map second (trace-patch before after)))

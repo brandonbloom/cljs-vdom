@@ -19,10 +19,12 @@
   (fipp.edn/pprint (diff before after))
   )
 
+(comment
+
 (let [vdom (seqs->vdom '(div {"tabindex" 0}
                           (span {:key "k"} "foo")
                           (b {} "bar")))
-      vdom (vdom/mount vdom "blah" [["div" 0]])
+      ;vdom (vdom/mount vdom "blah" [["div" 0]])
       ]
   ;(party vdom/null vdom)
   (party vdom vdom/null)
@@ -34,3 +36,5 @@
     ;(party vdom (vdom/set-props vdom :x {"tabindex" 2}))
     (party vdom (vdom/set-props vdom :x {"style" {"background" "green"}}))
     )
+
+)
