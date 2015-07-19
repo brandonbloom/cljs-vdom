@@ -58,8 +58,11 @@
     nodes))
 
 (defmethod mutate :free [vdom nodes [_ id]]
-  nodes ;;XXX call dispose top-down, remove nodes from map
-  )
+  ;;TODO Report frees somehow, for component[Will/Did]Unmount sorts of things.
+  ((fn rec [nodes id]
+     (let [nodes (dissoc nodes id)]
+       (reduce rec nodes (:children (vdom/node vdom id)))))
+   nodes id))
 
 (defn render [vdom]
   (swap! state (fn [state]

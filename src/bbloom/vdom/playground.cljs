@@ -22,7 +22,7 @@
   `(div {"tabindex" 0}
      (i {:key "c"} "italic!")
      (span {:key "a"} "foo")
-     (b {} "bar")
+     (b {} #_(i {} "bar"))
      (div {:key "b"
            "style" {"color" "red"}} "foox")
      (input {:key "c"
