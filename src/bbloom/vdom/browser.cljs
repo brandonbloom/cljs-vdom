@@ -6,6 +6,14 @@
 
 (defmulti mutate (fn [vdom nodes [method & args]] method))
 
+(defn render [vdom]
+  (swap! state (fn [state]
+                 {:vdom vdom
+                  :nodes (reduce (fn [nodes [vdom op]]
+                                   (mutate vdom nodes op))
+                                 (:nodes state)
+                                 (trace-patch (:vdom state) vdom))})))
+
 (defmethod mutate :mount [vdom nodes [_ eid id]]
   (let [el (.getElementById js/document eid)]
     (assert el (str "No element with id: " eid))
@@ -63,11 +71,3 @@
      (let [nodes (dissoc nodes id)]
        (reduce rec nodes (:children (vdom/node vdom id)))))
    nodes id))
-
-(defn render [vdom]
-  (swap! state (fn [state]
-                 {:vdom vdom
-                  :nodes (reduce (fn [nodes [vdom op]]
-                                   (mutate vdom nodes op))
-                                 (:nodes state)
-                                 (trace-patch (:vdom state) vdom))})))
