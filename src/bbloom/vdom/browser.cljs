@@ -2,47 +2,63 @@
   (:require [bbloom.vdom.core :as vdom]
             [bbloom.vdom.patch :refer [trace-patch]]))
 
-(defonce state (atom {:vdom vdom/null :nodes {}}))
+(defonce global (atom {:vdom vdom/null :node->id {} :id->node {}}))
 
-(defmulti mutate (fn [vdom nodes [method & args]] method))
+(defmulti mutate (fn [state [method & args]] method))
 
 (defn render [vdom]
-  (swap! state (fn [state]
-                 {:vdom vdom
-                  :nodes (reduce (fn [nodes [vdom op]]
-                                   (mutate vdom nodes op))
-                                 (:nodes state)
-                                 (trace-patch (:vdom state) vdom))})))
+  (let [state @global
+        trace (trace-patch (:vdom state) vdom)
+        state (reduce (fn [state [vdom op]]
+                        (mutate (assoc state :vdom vdom) op))
+                      (assoc state :vdom vdom :created [] :destroyed [])
+                      trace)]
+    (reset! global (dissoc state :created :destroyed))
+    (-> state
+        (select-keys [:created :destroyed])
+        (assoc :trace trace))))
 
-(defmethod mutate :mount [vdom nodes [_ eid id]]
+(defn lookup [id]
+  (get-in @global [:id->node id]))
+
+(defn identify [node]
+  (get-in @global [:node->id node]))
+
+(defmethod mutate :mount [{:keys [id->node] :as state} [_ eid id]]
   (let [el (.getElementById js/document eid)]
     (assert el (str "No element with id: " eid))
-    (.appendChild el (nodes id))
-    nodes))
+    (.appendChild el (id->node id))
+    state))
 
-(defn- detach [nodes id]
-  (let [child (nodes id)]
+(defn- detach [{:keys [id->node] :as state} id]
+  (let [child (id->node id)]
     (.removeChild (.-parentNode child) child))
-  nodes)
+  state)
 
-(defmethod mutate :unmount [vdom nodes [_ id]]
-  (detach nodes id))
+(defmethod mutate :unmount [state [_ id]]
+  (detach state id))
 
-(defmethod mutate :detach [vdom nodes [_ id]]
-  (detach nodes id))
+(defmethod mutate :detach [state [_ id]]
+  (detach state id))
 
-(defmethod mutate :create-text [vdom nodes [_ id text]]
-  (assoc nodes id (.createTextNode js/document text)))
+(defn create [state id node]
+  (-> state
+      (update :created conj [id node])
+      (assoc-in [:id->node id] node)
+      (assoc-in [:node->id node] id)))
 
-(defmethod mutate :set-text [vdom nodes [_ id text]]
-  (set! (.-nodeValue (nodes id)) text)
-  nodes)
+(defmethod mutate :create-text [state [_ id text]]
+  (create state id (.createTextNode js/document text)))
 
-(defmethod mutate :create-element [vdom nodes [_ id tag]]
-  (assoc nodes id (.createElement js/document tag)))
+(defmethod mutate :set-text [{:keys [id->node] :as state} [_ id text]]
+  (set! (.-nodeValue (id->node id)) text)
+  state)
 
-(defmethod mutate :set-props [vdom nodes [_ id props]]
-  (let [node (nodes id)]
+(defmethod mutate :create-element [state [_ id tag]]
+  (create state id (.createElement js/document tag)))
+
+(defmethod mutate :set-props [{:keys [id->node] :as state} [_ id props]]
+  (let [node (id->node id)]
     (doseq [[k v] (dissoc props "attributes" "style")]
       ;;XXX for nil values, virtual-dom sets to "" if prev was a string. Why?
       ;;^^^ If this is necessary, can it be done during diff?
@@ -53,21 +69,26 @@
         (.setAttribute node k v)))
     (doseq [[k v] (props "style")]
       (aset node "style" k (if (nil? v) "" v))))
-  nodes)
+  state)
 
-(defmethod mutate :insert-child [vdom nodes [_ parent-id index child-id]]
-  (let [parent (nodes parent-id)
+(defmethod mutate :insert-child
+  [{:keys [id->node] :as state} [_ parent-id index child-id]]
+  (let [parent (id->node parent-id)
         siblings (.-children parent)
-        child (nodes child-id)]
+        child (id->node child-id)]
     (if (= (alength siblings) index)
       (.appendChild parent child)
       (let [sibling (aget siblings index)]
         (.insertBefore parent child sibling)))
-    nodes))
+    state))
 
-(defmethod mutate :free [vdom nodes [_ id]]
-  ;;TODO Report frees somehow, for component[Will/Did]Unmount sorts of things.
-  ((fn rec [nodes id]
-     (let [nodes (dissoc nodes id)]
-       (reduce rec nodes (:children (vdom/node vdom id)))))
-   nodes id))
+(defmethod mutate :free [{:keys [vdom id->node] :as state} [_ id]]
+  ((fn rec [state id]
+     (let [node (id->node id)]
+       (reduce rec
+               (-> state
+                   (update :destroyed conj [id node])
+                   (update-in [:id->node] dissoc id)
+                   (update-in [:node->id] dissoc node))
+               (:children (vdom/node vdom id)))))
+   state id))

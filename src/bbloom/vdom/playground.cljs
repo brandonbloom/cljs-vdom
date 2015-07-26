@@ -34,4 +34,6 @@
 (-> tree
     seqs->vdom
     (vdom/mount "root" [["div" 0]])
-    render)
+    render
+    (select-keys [#_:trace :created :destroyed])
+    pprint)
