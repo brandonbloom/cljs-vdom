@@ -66,7 +66,6 @@
 
 (defn render [vdom]
   (swap! state (fn [state]
-                 (prn (bbloom.vdom.patch/diff (:vdom state) vdom))
                  {:vdom vdom
                   :nodes (reduce (fn [nodes [vdom op]]
                                    (mutate vdom nodes op))
