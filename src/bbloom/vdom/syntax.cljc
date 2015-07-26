@@ -6,6 +6,7 @@
 ;;XXX should not be part of the public API. Move to test directory?
 
 ;;XXX Should this use vdom/create-element, etc rather than direct updates?
+;;^^^ Nah, instead validate the result.
 
 (declare seqs->maps)
 

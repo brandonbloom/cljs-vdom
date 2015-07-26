@@ -127,3 +127,7 @@
   )
 
 (def null (map->VDom {:nodes {} :mounts {} :hosts {} :detached #{}}))
+
+(defn valid? [vdom]
+  ;;XXX validate vdom
+  true)
