@@ -1,4 +1,4 @@
-(defproject bbloom.vdom "0.0.1"
+(defproject bbloom.vdom "0.0.2"
   :description "A ClojureScript virtual-dom library."
   :url "https://github.com/brandonbloom/cljs-vdom"
   :license {:name "Eclipse Public License"
