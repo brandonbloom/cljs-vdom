@@ -1,4 +1,4 @@
-(defproject bbloom.vdom "0.1.0-SNAPSHOT"
+(defproject bbloom.vdom "0.0.1"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
