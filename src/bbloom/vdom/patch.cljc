@@ -24,7 +24,7 @@
                                  acc))
                   :else (assoc acc k val))))
             (when (seq removed)
-              (into {} (for [prop removed] [prop nil])))
+              (into {} (map #(vector % nil)) removed))
             after)))
 
 (defn update-element [vdom before {:keys [id props] :as after}]
@@ -57,15 +57,18 @@
 
 (defn patch-children [vdom {:keys [id children]}]
   (let [;; Move desired children in to place.
-        vdom (reduce (fn [vdom [i child]]
-                       (assert (nil? (*parented* child))
-                               (str "Duplicate node id: " child))
-                       (set! *parented* (conj *parented* child))
-                       (if (= (get-in (vdom/node vdom id) [:children i]) child)
-                         vdom
-                         (vdom/insert-child vdom id i child)))
-             vdom
-             (map vector (range) children))
+        vdom (transduce
+               (map-indexed vector)
+               (completing
+                 (fn [vdom [i child]]
+                   (assert (nil? (*parented* child))
+                           (str "Duplicate node id: " child))
+                   (set! *parented* (conj *parented* child))
+                   (if (= (get-in (vdom/node vdom id) [:children i]) child)
+                     vdom
+                     (vdom/insert-child vdom id i child))))
+               vdom
+               children)
         ;; Detach any leftover trailing children.
         n (max 0 (- (count (:children (vdom/node vdom id)))
                     (count children)))
@@ -78,21 +81,27 @@
 (defn patch [vdom goal]
   (let [N0 (vdom/nodes vdom), M0 (vdom/mounts vdom), H0 (vdom/hosts vdom)
         N1 (vdom/nodes goal), M1 (vdom/mounts goal), H1 (vdom/hosts goal)
-        unmounted (->> (remove (fn [[eid nid]] (= (M1 eid) nid)) M0)
-                       (map second))
-        mounted (remove (fn [[nid eid]] (= (H0 nid) eid)) H1)
-        freed (set/difference (set (map :id N0)) (set (map :id N1)))
-        vdom (reduce vdom/unmount vdom unmounted)
+        ;; Unmount.
+        vdom (transduce (comp (remove (fn [[eid nid]] (= (M1 eid) nid)))
+                              (map second))
+                        (completing vdom/unmount)
+                        vdom M0)
+        ;; Patch.
         vdom (reduce patch-node vdom N1)
-        els (filter #(-> % :tag string?) N1)
         vdom (binding [*parented* #{}]
-               (reduce patch-children vdom els))
-        freed (remove #(:parent (vdom/node vdom %)) freed)
-        vdom (reduce vdom/free vdom freed)
-        vdom (reduce (fn [vdom [nid eid]]
-                          (vdom/mount vdom eid nid))
-                        vdom
-                        mounted)]
+               (transduce (filter #(-> % :tag string?))
+                          (completing patch-children)
+                          vdom N1))
+        ;; Free.
+        freed (set/difference (into #{} (map :id) N0) (into #{} (map :id) N1))
+        vdom (transduce (remove #(:parent (vdom/node vdom %)))
+                        (completing vdom/free)
+                        vdom freed)
+        ;; Mount.
+        vdom (transduce (remove (fn [[nid eid]] (= (H0 nid) eid)))
+                        (completing (fn [vdom [nid eid]]
+                                      (vdom/mount vdom eid nid)))
+                        vdom H1)]
     vdom))
 
 (defn trace-patch [before after]
