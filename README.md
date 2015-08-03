@@ -8,12 +8,19 @@ Don't. At least not yet.
 
 But if you want to play with it, checkout [playground.cljs][2].
 
+The playground code uses an example "mini-framework" called
+[bbloom.vdom.syntax][4]. This mini-framework predates the [IDom protocol][5]
+and violates encapsulation. The mini-framework will be rewritten/eliminated
+soon.  My forthcoming framework relies on the IDom, so the protocol is likely
+to remain somewhat stable.
+
 ## Goals
 
-- Low-level design with minimal policy (like [virtual-dom][0]).
+- Low-level design with minimal policy (like [virtual-dom][3]).
 - Enable idiomatic use from ClojureScript.
 - Be as fast as necessary for responsive user interfaces.
 - Provide a richer abstraction of the DOM. See "novelty" below.
+- Offer host escape hatches without callback hooks.
 
 ## Non-Goals
 
@@ -88,6 +95,13 @@ reference equality is maintained wherever possible for fast equality checks.
 Patches are represented in terms of traditional DOM API manipulations, so that
 there's a nearly one-to-one operational interpretation.
 
+Great as the virtual DOM idea is, there's plenty of other useful code out there
+that is worth leveraging. It must remain possible to integrate with the real
+browser DOM without compromising the integrety of the virtual DOM abstraction.
+Rather than exposing callback-based lifecycle hooks, applying a diff to the
+browser DOM maintains the virtual/real mapping and reports created or freed
+nodes for processing at the level of a component model.
+
 ## Contributing
 
 Ping me if you're interested, I'm excited to discuss what you've got in mind.
@@ -100,6 +114,8 @@ Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
 
 
-[0]: https://github.com/Matt-Esch/virtual-dom
 [1]: https://facebook.github.io/react/
 [2]: ./src/bbloom/vdom/playground.cljs
+[3]: https://github.com/Matt-Esch/virtual-dom
+[4]: ./src/bbloom/vdom/syntax.cljc
+[5]: ./src/bbloom/vdom/core.cljc
