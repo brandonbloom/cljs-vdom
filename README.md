@@ -11,8 +11,8 @@ But if you want to play with it, checkout [playground.cljs][2].
 The playground code uses an example "mini-framework" called
 [bbloom.vdom.syntax][4]. This mini-framework predates the [IDom protocol][5]
 and violates encapsulation. The mini-framework will be rewritten/eliminated
-soon.  My forthcoming framework relies on the IDom, so the protocol is likely
-to remain somewhat stable.
+soon.  My forthcoming framework relies on IDom, so the protocol is likely to
+remain somewhat stable.
 
 ## Goals
 
